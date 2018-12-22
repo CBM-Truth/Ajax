@@ -39,7 +39,7 @@ public class Ajax {
         //private List<VNode> unknownNeighbors;
 
         public Map <VNode, Integer> buildDegreeMap() {
-            Map <VNode, Integer> degreeMap = new HashMap<>();
+            Map<VNode, Integer> degreeMap = new HashMap<>();
             for (VNode vertex: adjList.keySet()) {
                 int inDegree = 0;
                 for (VNode key: adjList.keySet()) {
@@ -56,7 +56,7 @@ public class Ajax {
             return degreeMap;
         }
 
-        public void decreaseKey(VNode vertex, Map <VNode, Integer> degreeMap) {
+        public void decreaseKey(VNode vertex, Map<VNode, Integer> degreeMap) {
             degreeMap.replace(vertex, degreeMap.get(vertex) - 1);
         }
 
@@ -64,7 +64,7 @@ public class Ajax {
             if (vertex == null) {
                 throw new IllegalArgumentException();
             }
-            Map <VNode, Integer> degreeMap = buildDegreeMap();
+            Map<VNode, Integer> degreeMap = buildDegreeMap();
             if (degreeMap.get(vertex) > 0) {
                 System.out.printf("No topological ordering starting from vertex %s\n", vertex.id);
             } else {
@@ -112,10 +112,10 @@ public class Ajax {
 
     private int vertices;
 
-    private Map <VNode, List <VNode>> adjList;
+    private Map<VNode, List <VNode>> adjList;
 
     public Ajax() {
-        adjList = new HashMap <VNode, List <VNode>>();
+        adjList = new HashMap<VNode, List <VNode>>();
     }
 
     public Map <VNode, List <VNode>> getAdjList() {
