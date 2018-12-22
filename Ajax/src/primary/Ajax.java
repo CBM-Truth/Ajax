@@ -38,7 +38,7 @@ public class Ajax {
         private int printedNodes;
         //private List<VNode> unknownNeighbors;
 
-        public Map <VNode, Integer> buildDegreeMap() {
+        public Map<VNode, Integer> buildDegreeMap() {
             Map<VNode, Integer> degreeMap = new HashMap<>();
             for (VNode vertex: adjList.keySet()) {
                 int inDegree = 0;
@@ -77,7 +77,7 @@ public class Ajax {
             }
         }
 
-        private void topoSortPrint(VNode vertex, Map <VNode, Integer> degreeMap) {
+        private void topoSortPrint(VNode vertex, Map<VNode, Integer> degreeMap) {
             if (degreeMap.get(vertex) == 0) {
                 System.out.printf("%s ", vertex.id);
                 printedNodes++;
@@ -112,13 +112,13 @@ public class Ajax {
 
     private int vertices;
 
-    private Map<VNode, List <VNode>> adjList;
+    private Map<VNode, List<VNode>> adjList;
 
     public Ajax() {
-        adjList = new HashMap<VNode, List <VNode>>();
+        adjList = new HashMap<VNode, List<VNode>>();
     }
 
-    public Map <VNode, List <VNode>> getAdjList() {
+    public Map<VNode, List<VNode>> getAdjList() {
         return this.adjList;
     }
 
