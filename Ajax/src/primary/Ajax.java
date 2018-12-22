@@ -56,7 +56,7 @@ public class Ajax {
             return degreeMap;
         }
 
-        public void decreaseKey(VNode vertex, Map < VNode, Integer > degreeMap) {
+        public void decreaseKey(VNode vertex, Map <VNode, Integer> degreeMap) {
             degreeMap.replace(vertex, degreeMap.get(vertex) - 1);
         }
 
@@ -115,7 +115,7 @@ public class Ajax {
     private Map <VNode, List <VNode>> adjList;
 
     public Ajax() {
-        adjList = new HashMap < VNode, List <VNode>> ();
+        adjList = new HashMap <VNode, List <VNode>>();
     }
 
     public Map <VNode, List <VNode>> getAdjList() {
@@ -167,6 +167,10 @@ public class Ajax {
             }
         }
         return false;
+    }
+
+    public int size() { 
+    	return vertices;
     }
 
     public void topoSortPrint() {
