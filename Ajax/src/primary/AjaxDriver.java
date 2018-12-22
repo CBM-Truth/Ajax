@@ -12,7 +12,8 @@ public class AjaxDriver {
 		graph.addEdge("2", "4");
 		graph.addEdge("3", "4");
 		graph.addEdge("3", "5");
-		graph.topoSortPrint("1");
+		graph.topoPrint("1");
+		System.out.println(graph.topoSort("1"));
 	}
 
 }

@@ -7,9 +7,9 @@ import java.util.Map;
 
 public class Ajax {
 
-    public class VNode {
-        private String id;
-        private int inDegree;
+    private class VNode {
+        public String id;
+        public int inDegree;
 
         public VNode(String id, int inDegree) {
             this.id = id;
@@ -34,78 +34,87 @@ public class Ajax {
         }
     }
 
-    public class TopologicalSortPrinter {
-        private int printedNodes;
-        //private List<VNode> unknownNeighbors;
-
-        public Map<VNode, Integer> buildDegreeMap() {
-            Map<VNode, Integer> degreeMap = new HashMap<>();
-            for (VNode vertex: adjList.keySet()) {
-                int inDegree = 0;
-                for (VNode key: adjList.keySet()) {
-                    if (!key.equals(vertex)) {
-                        for (VNode neighbor: adjList.get(key)) {
-                            if (neighbor.equals(vertex)) {
-                                inDegree++;
-                            }
-                        }
-                    }
-                }
-                degreeMap.put(vertex, inDegree);
-            }
-            return degreeMap;
+    private class TopologicalSorter {
+        public int visitedVertices;
+        public Map<VNode, Integer> degreeMap;
+        public List<String> ordering;
+        
+        public TopologicalSorter() {
+        	visitedVertices = 0;
+        	ordering = new ArrayList<>();
+        	buildDegreeMap();
         }
 
-        public void decreaseKey(VNode vertex, Map<VNode, Integer> degreeMap) {
+        public void buildDegreeMap() {
+            degreeMap = new HashMap<>();
+            for (VNode vertex: adjList.keySet()) {
+                degreeMap.put(vertex, vertex.inDegree);
+            }
+        }
+
+        public void decreaseKey(VNode vertex) {
             degreeMap.replace(vertex, degreeMap.get(vertex) - 1);
         }
 
-        public void topoSortPrint(VNode vertex) {
+        public List<String> sort(VNode vertex) {
             if (vertex == null) {
                 throw new IllegalArgumentException();
-            }
-            Map<VNode, Integer> degreeMap = buildDegreeMap();
+            }         
             if (degreeMap.get(vertex) > 0) {
-                System.out.printf("No topological ordering starting from vertex %s\n", vertex.id);
-            } else {
-                topoSortPrint(vertex, degreeMap);
-                System.out.println();
-                if (printedNodes != vertices) {
-                    System.out.println("Could not visit every vertex, this is not a valid ordering");
+                return null;
+            } 
+            else {
+                topoSort(vertex);
+                if (visitedVertices != vertices) {
+                    return null;
                 }
-                printedNodes = 0;
+                visitedVertices = 0;
             }
+            return ordering;
         }
-
-        private void topoSortPrint(VNode vertex, Map<VNode, Integer> degreeMap) {
+        
+        private void topoSort(VNode vertex) { 
             if (degreeMap.get(vertex) == 0) {
-                System.out.printf("%s ", vertex.id);
-                printedNodes++;
-                for (VNode neighbor: adjList.get(vertex)) {
-                    if (printedNodes < vertices) {
-                        decreaseKey(neighbor, degreeMap);
-                        topoSortPrint(neighbor, degreeMap);
+            	ordering.add(vertex.id);
+                visitedVertices++;
+                for (VNode neighbor : adjList.get(vertex)) {
+                    if (visitedVertices < vertices) {
+                        decreaseKey(neighbor);
+                        topoSort(neighbor);
                     }
                 }
             }
         }
+        
+        public void print(VNode vertex)  {
+            if (vertex == null) {
+                throw new IllegalArgumentException();
+            }         
+            if (degreeMap.get(vertex) > 0) {
+                System.out.printf("No topological ordering starting from vertex %s\n", vertex.id);
+            } 
+            else {
+                topoPrint(vertex);
+                System.out.println();
+                if (visitedVertices != vertices) {
+                    System.out.println("Could not visit every vertex, this is not a valid ordering");
+                }
+                visitedVertices = 0;
+            }   
+        }
 
-        /*
-		 * 		private void topoSortPrint(VNode vertex, Map<VNode, Integer> degreeMap) {
-			if (degreeMap.get(vertex) == 0) {
-				System.out.printf("%s ", vertex.id);
-				printedNodes++;
-				unknownNeighbors.addAll(adjList.get(vertex));
-				for (VNode neighbor : unknownNeighbors) { 
-					if (printedNodes < vertices) {
-						decreaseKey(neighbor, degreeMap);
-						topoSortPrint(neighbor, degreeMap);
-					}
-				} 
-			}
-		}
-	}
-		 */
+        private void topoPrint(VNode vertex) {
+            if (degreeMap.get(vertex) == 0) {
+                System.out.printf("%s ", vertex.id);
+                visitedVertices++;
+                for (VNode neighbor : adjList.get(vertex)) {
+                    if (visitedVertices < vertices) {
+                        decreaseKey(neighbor);
+                        topoPrint(neighbor);
+                    }
+                }
+            }
+        }
     }
 
     private VNode startVertex;
@@ -122,7 +131,7 @@ public class Ajax {
         return this.adjList;
     }
 
-    public void addVertex(VNode vertex) {
+    private void addVertex(VNode vertex) {
         if (adjList.containsKey(vertex)) {
             throw new IllegalStateException();
         }
@@ -130,8 +139,12 @@ public class Ajax {
         startVertex = (startVertex == null || vertex.inDegree < startVertex.inDegree) ? vertex : startVertex;
         vertices++;
     }
+    
+    public void addVertex(String v) { 
+    	addVertex(new VNode(v));
+    }
 
-    public void addEdge(VNode source, VNode destination) {
+    private void addEdge(VNode source, VNode destination) {
         if (!adjList.containsKey(source)) {
             addVertex(source);
         }
@@ -143,55 +156,66 @@ public class Ajax {
     }
 
     public void addEdge(String src, String dest) {
-        VNode source = new VNode(src);
-        VNode destination = new VNode(dest);
-        for (VNode vertex: adjList.keySet()) {
-            if (vertex.id.equals(src)) {
-                source = vertex;
-                break;
-            }
-        }
-        for (VNode vertex: adjList.keySet()) {
-            if (vertex.id.equals(dest)) {
-                destination = vertex;
-                break;
-            }
-        }
+    	VNode source = getVertex(src);
+    	VNode destination = getVertex(dest);
+    	if (source == null) { 
+    		source = new VNode(src);
+    	}
+    	if (destination == null) { 
+    		destination = new VNode(dest);
+    	}
         addEdge(source, destination);
     }
 
     public boolean contains(String id) {
-        for (VNode vertex: adjList.keySet()) {
+        for (VNode vertex : adjList.keySet()) {
             if (id.equals(vertex.id)) {
                 return true;
             }
         }
         return false;
     }
+    
+    private VNode getVertex(String id) {
+    	if (startVertex != null && startVertex.id.equals(id)) { 
+          	return startVertex;
+        }
+    	for (VNode vertex : adjList.keySet()) { 
+    		if (vertex.id.equals(id)) { 
+    			return vertex;
+    		}
+    	}
+    	return null;
+    }
 
     public int size() { 
-    	return vertices;
+    	return this.vertices;
+    }
+    
+    public int getNumEdges() {
+    	int edges = 0;
+    	for (VNode vertex : adjList.keySet()) { 
+    		edges += adjList.get(vertex).size();
+    	}
+    	return edges;
     }
 
-    public void topoSortPrint() {
-        topoSortPrint(startVertex);
+    public void topoPrint() {
+        topoPrint(startVertex.id);
     }
 
-    public void topoSortPrint(String v) {
+    public List<String> topoSort(String v) {
         if (!contains(v)) {
             throw new IllegalStateException("Specified start vertex does not exist");
         }
-        VNode vertex = null;
-        for (VNode vert: adjList.keySet()) {
-            if (vert.id.equals(v)) {
-                vertex = vert;
-            }
-        }
-        topoSortPrint(vertex);
+        return new TopologicalSorter().sort(getVertex(v));
     }
-
-    public void topoSortPrint(VNode vertex) {
-        new TopologicalSortPrinter().topoSortPrint(vertex);
+    
+    public void topoPrint(String v) {
+        if (!contains(v)) {
+            throw new IllegalStateException("Specified start vertex does not exist");
+        }	
+    	new TopologicalSorter().print(getVertex(v));
     }
-
 }
+
