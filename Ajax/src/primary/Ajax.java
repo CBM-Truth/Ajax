@@ -8,7 +8,7 @@ import java.util.LinkedList;
 import java.util.Set;
 import java.util.HashSet;
 
-public class Ajax<V> {
+public class Ajax<V> implements Graph<V> {
 
     public class VNode<T> {
         private T id;
@@ -104,6 +104,10 @@ public class Ajax<V> {
         this.clear();
     }
 
+    public void addVertex(V v) {
+        addVertex(new VNode<>(v));
+    }
+
     private void addVertex(VNode<V> vertex) {
         if (vertex == null) {
             throw new IllegalArgumentException();
@@ -115,9 +119,17 @@ public class Ajax<V> {
         startVertex = (startVertex == null || vertex.inDegree < startVertex.inDegree) ? vertex : startVertex;
         vertices++;
     }
-    
-    public void addVertex(V v) {
-    	addVertex(new VNode<>(v));
+
+    public void addEdge(V src, V dest) {
+        VNode<V> source = getVertex(src);
+        VNode<V> destination = getVertex(dest);
+        if (source == null) {
+            source = new VNode<>(src);
+        }
+        if (destination == null) {
+            destination = new VNode<>(dest);
+        }
+        addEdge(source, destination);
     }
 
     private void addEdge(VNode<V> source, VNode<V> destination) {
@@ -134,24 +146,26 @@ public class Ajax<V> {
         destination.inDegree++;
     }
 
-    public void addEdge(V src, V dest) {
-    	VNode<V> source = getVertex(src);
-    	VNode<V> destination = getVertex(dest);
-    	if (source == null) {
-    		source = new VNode<>(src);
-    	}
-    	if (destination == null) { 
-    		destination = new VNode<>(dest);
-    	}
-        addEdge(source, destination);
-    }
-
     public void removeVertex(V v) {
         VNode<V> target = getVertex(v);
+        List<VNode<V>> connectedVertices = adjList.get(target);
         adjList.remove(target);
         for (VNode<V> vertex : adjList.keySet()) {
             List<VNode<V>> neighbors = adjList.get(vertex);
             neighbors.removeIf(neighbor -> (neighbor.equals(target)));
+        }
+        for (VNode<V> vertex : connectedVertices) {
+            vertex.inDegree--;
+        }
+    }
+
+    public void removeEdge(V src, V dest) {
+        VNode<V> source = getVertex(src);
+        VNode<V> destination = getVertex(dest);
+        if (source != null && destination != null) {
+            List<VNode<V>> neighbors = adjList.get(source);
+            neighbors.remove(destination);
+            destination.inDegree--;
         }
     }
 
@@ -178,13 +192,13 @@ public class Ajax<V> {
         return this.adjList.keySet().contains(v);
     }
 
-    public boolean containsEdge(V source, V destination) {
-        return containsEdge(getVertex(source), getVertex(destination));
+    public boolean containsEdge(V src, V dest) {
+        return containsEdge(getVertex(src), getVertex(dest));
     }
 
     private boolean containsEdge(VNode<V> source, VNode<V> destination) {
         if (source == null || destination == null) {
-            throw new IllegalArgumentException();
+            return false;
         }
         return this.adjList.get(source).contains(destination);
     }
@@ -221,23 +235,35 @@ public class Ajax<V> {
         return this.adjList.keySet().isEmpty();
     }
 
-    public Set<VNode<V>> neighbors(VNode<V> v) {
-        if (v == null) {
-            throw new IllegalArgumentException();
-        }
-        return new HashSet<>(adjList.get(v));
+    public Set<V> neighbors(V v) {
+        return neighbors(getVertex(v));
     }
 
-    public Set<VNode<V>> inverseNeighbors(VNode<V> v) {
+    private Set<V> neighbors(VNode<V> v) {
         if (v == null) {
             throw new IllegalArgumentException();
         }
-        Set<VNode<V>> vertices = new HashSet<>();
+        Set<V> vertices = new HashSet<>();
+        for (VNode<V> vertex : adjList.get(v)) {
+            vertices.add(vertex.id);
+        }
+        return vertices;
+    }
+
+    public Set<V> inverseNeighbors(V v) {
+        return inverseNeighbors(getVertex(v));
+    }
+
+    private Set<V> inverseNeighbors(VNode<V> v) {
+        if (v == null) {
+            throw new IllegalArgumentException();
+        }
+        Set<V> vertices = new HashSet<>();
         for (VNode<V> vertex : adjList.keySet()) {
             if (!v.equals(vertex)) {
                 for (VNode<V> other : adjList.get(vertex)) {
                     if (v.equals(other)) {
-                        vertices.add(vertex);
+                        vertices.add(vertex.id);
                     }
                 }
             }
@@ -245,18 +271,33 @@ public class Ajax<V> {
         return vertices;
     }
 
-    public Set<VNode<V>> vertices() {
-        return this.adjList.keySet();
+    public Set<V> vertices() {
+        Set<V> vertices = new HashSet<>();
+        for (VNode<V> vertex : adjList.keySet()) {
+            vertices.add(vertex.id);
+        }
+        return vertices;
     }
 
-    public int outDegree(VNode<V> v) {
+    public int outDegree(V v) {
+        return outDegree(getVertex(v));
+    }
+
+    private int outDegree(VNode<V> v) {
         if (v == null) {
-            throw new IllegalArgumentException();
+            return 0;
         }
         return this.adjList.get(v).size();
     }
 
-    public int inDegree(VNode<V> v) {
+    public int inDegree(V v) {
+        return inDegree(getVertex(v));
+    }
+
+    private int inDegree(VNode<V> v) {
+        if (v == null) {
+            return 0;
+        }
         return v.inDegree;
     }
 
