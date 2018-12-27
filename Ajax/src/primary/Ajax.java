@@ -1,27 +1,25 @@
 package primary;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
-public class Ajax {
 
-    private class VNode {
-        public String id;
-        public int inDegree;
+public class Ajax<V> {
 
-        public VNode(String id, int inDegree) {
+    public class VNode<T> {
+        private T id;
+        private int inDegree;
+
+        private VNode(T id, int inDegree) {
             this.id = id;
             this.inDegree = inDegree;
         }
 
-        public VNode(String id) {
+        private VNode(T id) {
             this(id, 0);
         }
 
         public String toString() {
-            return id;
+            return id.toString();
         }
 
         @Override
@@ -29,34 +27,38 @@ public class Ajax {
             if (!(obj instanceof VNode)) {
                 return false;
             }
+            @SuppressWarnings("unchecked")
             VNode other = (VNode) obj;
             return this.id.equals(other.id) && this.inDegree == other.inDegree;
         }
     }
 
     private class TopologicalSorter {
-        public int visitedVertices;
-        public Map<VNode, Integer> degreeMap;
-        public List<String> ordering;
+        private int visitedVertices;
+        private Map<VNode<V>, Integer> degreeMap;
+        private List<V> ordering;
         
-        public TopologicalSorter() {
+        private TopologicalSorter() {
         	visitedVertices = 0;
         	ordering = new ArrayList<>();
         	buildDegreeMap();
         }
 
-        public void buildDegreeMap() {
+        private void buildDegreeMap() {
             degreeMap = new HashMap<>();
-            for (VNode vertex: adjList.keySet()) {
+            for (VNode<V> vertex : adjList.keySet()) {
                 degreeMap.put(vertex, vertex.inDegree);
             }
         }
 
-        public void decreaseKey(VNode vertex) {
+        private void decreaseKey(VNode<V> vertex) {
+            if (vertex == null) {
+                throw new IllegalArgumentException();
+            }
             degreeMap.replace(vertex, degreeMap.get(vertex) - 1);
         }
 
-        public List<String> sort(VNode vertex) {
+        private List<V> sort(VNode<V> vertex) {
             if (vertex == null) {
                 throw new IllegalArgumentException();
             }         
@@ -73,11 +75,11 @@ public class Ajax {
             return ordering;
         }
         
-        private void topoSort(VNode vertex) { 
+        private void topoSort(VNode<V> vertex) {
             if (degreeMap.get(vertex) == 0) {
             	ordering.add(vertex.id);
                 visitedVertices++;
-                for (VNode neighbor : adjList.get(vertex)) {
+                for (VNode<V> neighbor : adjList.get(vertex)) {
                     if (visitedVertices < vertices) {
                         decreaseKey(neighbor);
                         topoSort(neighbor);
@@ -85,66 +87,38 @@ public class Ajax {
                 }
             }
         }
-        
-        public void print(VNode vertex)  {
-            if (vertex == null) {
-                throw new IllegalArgumentException();
-            }         
-            if (degreeMap.get(vertex) > 0) {
-                System.out.printf("No topological ordering starting from vertex %s\n", vertex.id);
-            } 
-            else {
-                topoPrint(vertex);
-                System.out.println();
-                if (visitedVertices != vertices) {
-                    System.out.println("Could not visit every vertex, this is not a valid ordering");
-                }
-                visitedVertices = 0;
-            }   
-        }
-
-        private void topoPrint(VNode vertex) {
-            if (degreeMap.get(vertex) == 0) {
-                System.out.printf("%s ", vertex.id);
-                visitedVertices++;
-                for (VNode neighbor : adjList.get(vertex)) {
-                    if (visitedVertices < vertices) {
-                        decreaseKey(neighbor);
-                        topoPrint(neighbor);
-                    }
-                }
-            }
-        }
     }
 
-    private VNode startVertex;
+    private VNode<V> startVertex;
 
     private int vertices;
 
-    private Map<VNode, List<VNode>> adjList;
+    private Map<VNode<V>, List<VNode<V>>> adjList;
 
     public Ajax() {
-        adjList = new HashMap<VNode, List<VNode>>();
+        this.clear();
     }
 
-    public Map<VNode, List<VNode>> getAdjList() {
-        return this.adjList;
-    }
-
-    private void addVertex(VNode vertex) {
+    private void addVertex(VNode<V> vertex) {
+        if (vertex == null) {
+            throw new IllegalArgumentException();
+        }
         if (adjList.containsKey(vertex)) {
             throw new IllegalStateException();
         }
-        adjList.put(vertex, new ArrayList<>());
+        adjList.put(vertex, new LinkedList<>());
         startVertex = (startVertex == null || vertex.inDegree < startVertex.inDegree) ? vertex : startVertex;
         vertices++;
     }
     
-    public void addVertex(String v) { 
-    	addVertex(new VNode(v));
+    public void addVertex(V v) {
+    	addVertex(new VNode<>(v));
     }
 
-    private void addEdge(VNode source, VNode destination) {
+    private void addEdge(VNode<V> source, VNode<V> destination) {
+        if (source == null || destination == null) {
+            throw new IllegalArgumentException();
+        }
         if (!adjList.containsKey(source)) {
             addVertex(source);
         }
@@ -155,32 +129,70 @@ public class Ajax {
         destination.inDegree++;
     }
 
-    public void addEdge(String src, String dest) {
-    	VNode source = getVertex(src);
-    	VNode destination = getVertex(dest);
-    	if (source == null) { 
-    		source = new VNode(src);
+    public void addEdge(V src, V dest) {
+    	VNode<V> source = getVertex(src);
+    	VNode<V> destination = getVertex(dest);
+    	if (source == null) {
+    		source = new VNode<>(src);
     	}
     	if (destination == null) { 
-    		destination = new VNode(dest);
+    		destination = new VNode<>(dest);
     	}
         addEdge(source, destination);
     }
 
-    public boolean contains(String id) {
-        for (VNode vertex : adjList.keySet()) {
-            if (id.equals(vertex.id)) {
-                return true;
-            }
+    public void removeVertex(V v) {
+        VNode<V> target = getVertex(v);
+        adjList.remove(target);
+        for (VNode<V> vertex : adjList.keySet()) {
+            List<VNode<V>> neighbors = adjList.get(vertex);
+            neighbors.removeIf(neighbor -> (neighbor.equals(target)));
         }
-        return false;
+    }
+
+    public void clear() {
+        startVertex = null;
+        vertices = 0;
+        adjList = new HashMap<>();
+    }
+
+    public void clearEdges() {
+        for (VNode<V> vertex : adjList.keySet()) {
+            adjList.get(vertex).clear();
+        }
+    }
+
+    public boolean containsVertex(V id) {
+        return getVertex(id) != null;
+    }
+
+    public boolean containsVertex(VNode<V> v) {
+        if (v == null) {
+            throw new IllegalArgumentException();
+        }
+        return this.adjList.keySet().contains(v);
+    }
+
+    public boolean containsEdge(V source, V destination) {
+        return containsEdge(getVertex(source), getVertex(destination));
+    }
+
+    private boolean containsEdge(VNode<V> source, VNode<V> destination) {
+        if (source == null || destination == null) {
+            throw new IllegalArgumentException();
+        }
+        return this.adjList.get(source).contains(destination);
+    }
+
+    public Map<VNode<V>, List<VNode<V>>> getAdjList() {
+        return this.adjList;
     }
     
-    private VNode getVertex(String id) {
+    private VNode<V> getVertex(V id) {
     	if (startVertex != null && startVertex.id.equals(id)) { 
           	return startVertex;
         }
-    	for (VNode vertex : adjList.keySet()) { 
+    	for (VNode<V> vertex : adjList.keySet()) {
     		if (vertex.id.equals(id)) { 
     			return vertex;
     		}
@@ -188,34 +200,68 @@ public class Ajax {
     	return null;
     }
 
-    public int size() { 
+    public int vertexCount() {
     	return this.vertices;
     }
-    
-    public int getNumEdges() {
-    	int edges = 0;
-    	for (VNode vertex : adjList.keySet()) { 
-    		edges += adjList.get(vertex).size();
-    	}
-    	return edges;
+
+    public int edgeCount() {
+        int edges = 0;
+        for (VNode vertex : adjList.keySet()) {
+            edges += adjList.get(vertex).size();
+        }
+        return edges;
     }
 
-    public void topoPrint() {
-        topoPrint(startVertex.id);
+    public boolean isEmpty() {
+        return this.adjList.keySet().isEmpty();
     }
 
-    public List<String> topoSort(String v) {
-        if (!contains(v)) {
+    public Set<VNode<V>> neighbors(VNode<V> v) {
+        if (v == null) {
+            throw new IllegalArgumentException();
+        }
+        return new HashSet<>(adjList.get(v));
+    }
+
+    public Set<VNode<V>> inverseNeighbors(VNode<V> v) {
+        if (v == null) {
+            throw new IllegalArgumentException();
+        }
+        Set<VNode<V>> vertices = new HashSet<>();
+        for (VNode<V> vertex : adjList.keySet()) {
+            if (!v.equals(vertex)) {
+                for (VNode<V> other : adjList.get(vertex)) {
+                    if (v.equals(other)) {
+                        vertices.add(vertex);
+                    }
+                }
+            }
+        }
+        return vertices;
+    }
+
+    public Set<VNode<V>> vertices() {
+        return this.adjList.keySet();
+    }
+
+    public int outDegree(VNode<V> v) {
+        if (v == null) {
+            throw new IllegalArgumentException();
+        }
+        return this.adjList.get(v).size();
+    }
+
+    public int inDegree(VNode<V> v) {
+        return v.inDegree;
+    }
+
+    public List<V> topoSort(V v) {
+        if (!containsVertex(v)) {
             throw new IllegalStateException("Specified start vertex does not exist");
         }
         return new TopologicalSorter().sort(getVertex(v));
     }
-    
-    public void topoPrint(String v) {
-        if (!contains(v)) {
-            throw new IllegalStateException("Specified start vertex does not exist");
-        }	
-    	new TopologicalSorter().print(getVertex(v));
-    }
+
+
 }
 
