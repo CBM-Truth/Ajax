@@ -157,6 +157,7 @@ public class Ajax<V> implements Graph<V> {
         for (VNode<V> vertex : connectedVertices) {
             vertex.inDegree--;
         }
+        vertices--;
     }
 
     public void removeEdge(V src, V dest) {
@@ -301,13 +302,16 @@ public class Ajax<V> implements Graph<V> {
         return v.inDegree;
     }
 
-    public List<V> topoSort(V v) {
+    public List<V> topologicalSort(V v) {
         if (!containsVertex(v)) {
             throw new IllegalStateException("Specified start vertex does not exist");
         }
         return new TopologicalSorter().sort(getVertex(v));
     }
 
-
+    public VNode<V> generateVertex(V id, int inDegree) {
+        return new VNode<>(id, inDegree);
+    }
 }
+
 
