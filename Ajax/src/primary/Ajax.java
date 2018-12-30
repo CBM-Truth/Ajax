@@ -203,10 +203,6 @@ public class Ajax<V> implements Graph<V> {
         }
         return this.adjList.get(source).contains(destination);
     }
-
-    public Map<VNode<V>, List<VNode<V>>> getAdjList() {
-        return this.adjList;
-    }
     
     private VNode<V> getVertex(V id) {
     	if (startVertex != null && startVertex.id.equals(id)) { 
@@ -233,7 +229,7 @@ public class Ajax<V> implements Graph<V> {
     }
 
     public boolean isEmpty() {
-        return this.adjList.keySet().isEmpty();
+        return this.adjList.isEmpty();
     }
 
     public Set<V> neighbors(V v) {
@@ -263,7 +259,7 @@ public class Ajax<V> implements Graph<V> {
         for (VNode<V> vertex : adjList.keySet()) {
             if (!v.equals(vertex)) {
                 for (VNode<V> other : adjList.get(vertex)) {
-                    if (v.equals(other)) {
+                    if (other.equals(v)) {
                         vertices.add(vertex.id);
                     }
                 }
