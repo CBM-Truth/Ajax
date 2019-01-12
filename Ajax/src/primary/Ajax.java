@@ -150,8 +150,8 @@ public class Ajax<V> implements Graph<V> {
         VNode<V> target = getVertex(v);
         List<VNode<V>> connectedVertices = adjList.get(target);
         adjList.remove(target);
-        for (List<VNode<V>> bucket : adjList.values()) {
-            bucket.removeIf(neighbor -> neighbor.equals(target));
+        for (List<VNode<V>> edges : adjList.values()) {
+            edges.removeIf(neighbor -> neighbor.equals(target));
         }
         for (VNode<V> vertex : connectedVertices) {
             vertex.inDegree--;
