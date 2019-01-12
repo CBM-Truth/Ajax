@@ -173,7 +173,7 @@ public class Ajax<V> implements Graph<V> {
     public void clear() {
         startVertex = null;
         vertices = 0;
-        adjList = new HashMap<>();
+        adjList.clear();
     }
 
     public void clearEdges() {
